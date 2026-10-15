@@ -1,0 +1,888 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Twin Farms Guest App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Karla:wght@400;500;600;700&display=swap"><style>
+/* ============================================================
+   TOKENS — page stage (theme-aware)
+   ============================================================ */
+:root{
+  --stage:#E8E3D6;
+  --stage-2:#FAF8F3;
+  --stage-3:#DCD7CA;
+  --ink:#1F2527;
+  --ink-2:#5A6266;
+  --muted:#7A8184;
+  --line:#D4CFC2;
+  --line-soft:#D9D4C6;
+  --accent:#8A6A1E;
+  --accent-soft:#EFD9B4;
+  --pine:#2F3538;
+  --on-pine:#FAF8F3;
+  --shadow:0 30px 70px -30px rgba(22,33,28,.45), 0 4px 14px -6px rgba(22,33,28,.2);
+
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --ui:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"Karla",-apple-system,sans-serif;
+
+  /* app palette — fixed: a device screen keeps its own identity */
+  --app-bg:#FAF8F3;
+  --app-surface:#FFFFFF;
+  --app-ink:#1F2527;
+  --app-ink-2:#4F575A;
+  --app-muted:#7A8184;
+  --app-line:#E4DFD0;
+  --app-pine:#2F3538;
+  --app-pine-2:#4A5256;
+  --app-marigold:#E3B556;
+  --app-marigold-ink:#7A5C14;
+  --app-clay:#B0652F;
+  --app-clay-soft:#F8EFD7;
+  --app-mint:#F1ECE0;
+  --app-sand:#F4ECD9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#101416;
+    --stage-2:#1B2123;
+    --stage-3:#232A2C;
+    --ink:#EAE5D8;
+    --ink-2:#CDCBC3;
+    --muted:#A0A39B;
+    --line:#333B3E;
+    --line-soft:#2B3235;
+    --accent:#E3B556;
+    --accent-soft:#3A2E17;
+    --pine:#E3B556;
+    --on-pine:#101416;
+    --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#101416;
+  --stage-2:#1B2123;
+  --stage-3:#232A2C;
+  --ink:#EAE5D8;
+  --ink-2:#CDCBC3;
+  --muted:#A0A39B;
+  --line:#333B3E;
+  --line-soft:#2B3235;
+  --accent:#E3B556;
+  --accent-soft:#3A2E17;
+  --pine:#E3B556;
+  --on-pine:#101416;
+  --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--ui);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ============================================================
+   PAGE CHROME
+   ============================================================ */
+.topbar{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:18px 28px;border-bottom:1px solid var(--line);
+  background:var(--stage-2);
+}
+.mark{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  background:var(--pine);color:var(--on-pine);
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.02em;
+}
+.topbar-title{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.topbar-title strong{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.topbar-title span{font-size:12.5px;color:var(--muted)}
+.tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 9px;border-radius:6px;border:1px solid var(--line);color:var(--muted);
+}
+.tag.hot{border-color:var(--accent);color:var(--accent)}
+.tag.toggle{cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.tag.toggle:hover{border-color:var(--ink-2);color:var(--ink)}
+.tag.toggle[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--on-pine)}
+
+/* ============================================================
+   THREE-COLUMN STAGE
+   ============================================================ */
+.layout{
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:0;
+  align-items:start;
+  min-height:calc(100vh - 76px);
+}
+/* Demo view is the default: Italian prototype only, no English on screen.
+   The "Note" button (or N) reveals the presenter notes. */
+body[data-notes="on"] .notes{display:block}
+@media (min-width:1181px){
+  body[data-notes="on"] .layout{grid-template-columns:238px minmax(0,1fr) 340px}
+}
+.rail{
+  border-right:1px solid var(--line);
+  padding:22px 16px 40px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+}
+.rail-group{margin-bottom:18px}
+.rail-group > .eyebrow{padding:0 10px 7px}
+.rail-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:9px;color:var(--ink-2);
+  font-size:13.5px;font-weight:500;transition:background .15s,color .15s;
+}
+.rail-item:hover{background:var(--stage-3);color:var(--ink)}
+.rail-item .num{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  width:18px;flex:none;
+}
+.rail-item[aria-current="true"]{background:var(--pine);color:var(--on-pine);font-weight:600}
+.rail-item[aria-current="true"] .num{color:inherit;opacity:.65}
+
+.stage{
+  padding:30px 20px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  background:
+    radial-gradient(680px 420px at 50% 18%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+    var(--stage);
+}
+.stage-hint{
+  display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12.5px;
+}
+.stage-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+.notes{
+  display:none;
+  border-left:1px solid var(--line);
+  padding:26px 24px 48px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+  background:var(--stage-2);
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-wrap{
+  --s:1;
+  width:calc(414px * var(--s));
+  height:calc(836px * var(--s));
+}
+.phone{
+  width:414px;height:836px;
+  transform:scale(var(--s));transform-origin:top center;
+  border-radius:50px;
+  background:linear-gradient(160deg,#2F3538,#121719 55%,#283033);
+  padding:12px;
+  box-shadow:var(--shadow), 0 0 0 1.5px rgba(255,255,255,.07) inset;
+  position:relative;
+}
+.phone::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  top:24px;width:104px;height:26px;border-radius:14px;background:#0B0E0F;z-index:6;
+}
+.screen{
+  width:100%;height:100%;border-radius:39px;overflow:hidden;
+  background:var(--app-bg);color:var(--app-ink);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* status bar */
+.statusbar{
+  height:48px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 4px;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:5;
+}
+.statusbar.on-dark{color:#fff}
+.sb-right{display:flex;align-items:center;gap:5px}
+.sb-bar{width:3px;border-radius:1px;background:currentColor}
+.sb-batt{width:22px;height:11px;border:1.4px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.sb-batt::before{content:"";position:absolute;inset:2px;right:6px;background:currentColor;border-radius:1px}
+
+/* scrolling body */
+.app-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.app-scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 20px}
+.stack{display:flex;flex-direction:column}
+
+/* app views */
+.view{display:none;height:100%;flex-direction:column}
+.view.active{display:flex}
+
+/* ============================================================
+   APP COMPONENTS
+   ============================================================ */
+.a-h1{font-family:var(--display);font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.a-h2{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.015em}
+.a-h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.a-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--app-muted);
+}
+.a-meta{font-size:12px;color:var(--app-muted);font-weight:500}
+
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sec-head .link{font-size:12px;font-weight:600;color:var(--app-pine-2)}
+
+.appbar{
+  flex:none;display:flex;align-items:center;gap:12px;padding:2px 20px 14px;
+}
+.appbar .a-h2{margin-right:auto}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;flex:none;
+  display:grid;place-items:center;background:var(--app-surface);
+  border:1px solid var(--app-line);color:var(--app-ink-2);
+}
+.icon-btn.ghost{background:transparent;border-color:transparent}
+.icon-btn.on-dark{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+
+.card{
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:18px;padding:14px;
+}
+
+/* thumbnails built from gradients + line art, no external assets */
+.thumb{
+  position:relative;overflow:hidden;border-radius:14px;flex:none;
+  background:linear-gradient(145deg,var(--t1,#3C6455),var(--t2,#1E3A30));
+}
+.thumb > svg:not(.ico){position:absolute;inset:0;width:100%;height:100%}
+.thumb > svg.ico{position:relative}
+.thumb .dur{
+  position:absolute;right:6px;bottom:6px;z-index:2;
+  font-family:var(--mono);font-size:9.5px;color:#fff;
+  background:rgba(11,16,14,.62);padding:2px 5px;border-radius:5px;
+}
+.t-river{--t1:#7FA7B5;--t2:#2D5566}
+.t-terra{--t1:#B07A55;--t2:#4F3223}
+.t-raiva{--t1:#4A5A57;--t2:#161C1B}
+.t-spa{--t1:#B7C4B0;--t2:#586B5C}
+.t-star{--t1:#3C4466;--t2:#12152B}
+.t-wine{--t1:#9C5B6B;--t2:#46202B}
+.t-sunset{--t1:#E3B556;--t2:#8C3F46}
+.t-canyon{--t1:#6FA39A;--t2:#1F5249}
+.t-hills{--t1:#9FB28F;--t2:#47573F}
+.t-gift{--t1:#D9B79A;--t2:#7A5238}
+.t-pool{--t1:#7FB6B8;--t2:#2C6568}
+.t-house{--t1:#7A8B6A;--t2:#252E24}
+.t-dining{--t1:#D49A4A;--t2:#4A2E12}
+.t-cellar{--t1:#8A5A4A;--t2:#2A1712}
+.t-kitchen{--t1:#C0703A;--t2:#3A1E0E}
+.t-krug{--t1:#E3B556;--t2:#6B4A10}
+.t-twiggs{--t1:#9A6A3A;--t2:#2E1C0E}
+.t-spa{--t1:#9FB39A;--t2:#3E5240}
+.t-onsen{--t1:#6E8A8A;--t2:#1E3030}
+.t-picnic{--t1:#D07A3A;--t2:#6E3A14}
+.t-trail{--t1:#C9893A;--t2:#4C3414}
+.t-pond{--t1:#7FA0AE;--t2:#2B4452}
+.t-event{--t1:#7A6A5A;--t2:#2A211A}
+.t-gift{--t1:#E3B556;--t2:#7A5C14}
+.t-pilates{--t1:#3E6858;--t2:#1D362C}
+.t-yoga{--t1:#5C7F8C;--t2:#2A414B}
+.t-flow{--t1:#B07B2E;--t2:#5E3D11}
+.t-mobility{--t1:#6E7F5A;--t2:#33402A}
+.t-zumba{--t1:#C0705E;--t2:#6B3226}
+.t-prenatal{--t1:#C99A9A;--t2:#7A4E52}
+
+/* horizontal rails */
+.hrail{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 4px;scrollbar-width:none}
+.hrail::-webkit-scrollbar{display:none}
+
+/* class list row */
+.row{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:16px;padding:9px;transition:border-color .15s,transform .1s;
+}
+.row:hover{border-color:var(--app-pine-2)}
+.row:active{transform:scale(.99)}
+.row .thumb{width:70px;height:62px}
+.row-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.row-body .t{font-size:13.5px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+
+/* pills / chips */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;
+  background:var(--app-mint);color:var(--app-pine);
+}
+.pill.sand{background:var(--app-sand);color:var(--app-marigold-ink)}
+.pill.clay{background:var(--app-clay-soft);color:#8E4437}
+.pill.live{background:#FBE9E6;color:#A83B2A}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 20px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--app-line);background:var(--app-surface);color:var(--app-ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+
+.seg{
+  display:flex;gap:3px;background:var(--app-line);padding:3px;border-radius:12px;
+}
+.seg button{
+  flex:1;font-size:12.5px;font-weight:600;padding:7px 4px;border-radius:9px;color:var(--app-ink-2);
+}
+.seg button[aria-pressed="true"]{background:var(--app-surface);color:var(--app-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:700;padding:13px 18px;border-radius:14px;
+  background:var(--app-pine);color:#fff;width:100%;transition:filter .15s;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.amber{background:var(--app-marigold);color:#2A1B04}
+.btn.outline{background:transparent;border:1.5px solid var(--app-line);color:var(--app-ink)}
+.btn.sm{font-size:12.5px;padding:8px 14px;width:auto;border-radius:11px}
+
+/* progress */
+.bar{display:block;height:6px;border-radius:99px;background:var(--app-line);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:99px;background:var(--app-pine-2)}
+.bar.amber > i{background:var(--app-marigold)}
+.bar.clay > i{background:var(--app-clay)}
+
+/* tab bar */
+.tabbar{
+  flex:none;display:flex;padding:9px 8px 22px;
+  background:color-mix(in srgb, var(--app-surface) 88%, transparent);
+  backdrop-filter:blur(14px);
+  border-top:1px solid var(--app-line);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:9.5px;font-weight:600;color:var(--app-muted);padding:4px 0;
+}
+.tab[aria-current="true"]{color:var(--app-pine)}
+.tab svg{width:21px;height:21px}
+
+/* hero blocks */
+.hero-pine{
+  background:linear-gradient(155deg,#3A4144,#22282A);color:#fff;position:relative;overflow:hidden;
+}
+.hero-pine .deco{position:absolute;inset:0;opacity:.55}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:var(--app-surface);border:1px solid var(--app-line);border-radius:15px;padding:11px 12px}
+.stat b{display:block;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* schedule */
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--app-line)}
+.slot:last-child{border-bottom:0}
+.slot .time{font-family:var(--mono);font-size:12px;font-weight:500;width:44px;flex:none;padding-top:2px}
+.week{display:flex;gap:6px}
+.day{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;border-radius:12px;border:1px solid transparent;font-size:11px;color:var(--app-muted);
+}
+.day b{font-size:14px;color:var(--app-ink);font-variant-numeric:tabular-nums}
+.day[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:rgba(255,255,255,.75)}
+.day[aria-pressed="true"] b{color:#fff}
+
+/* day rows in a program */
+.dayrow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.dayrow:last-child{border-bottom:0}
+.tick{
+  width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1.5px solid var(--app-line);color:var(--app-muted);
+}
+.tick.done{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+.tick.today{border-color:var(--app-marigold);color:var(--app-marigold-ink);border-width:2px}
+
+/* quote from Roberta */
+.quote{
+  background:var(--app-sand);border-radius:16px;padding:13px 14px;
+  font-family:var(--display);font-size:14px;line-height:1.45;color:#4F3F18;
+}
+.quote .who{display:block;margin-top:7px;font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--app-marigold-ink)}
+
+/* settings list */
+.list-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--app-line);font-size:14px;font-weight:600}
+.list-item:last-child{border-bottom:0}
+.list-item .v{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--app-muted)}
+
+/* plan cards */
+.plan{
+  width:100%;text-align:left;border:1.5px solid var(--app-line);background:var(--app-surface);
+  border-radius:18px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.plan[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint)}
+.radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--app-line);flex:none;margin-top:2px;display:grid;place-items:center}
+.plan[aria-pressed="true"] .radio{border-color:var(--app-pine);background:var(--app-pine);color:#fff}
+
+/* toggle */
+.switch{width:42px;height:25px;border-radius:99px;background:var(--app-pine);position:relative;flex:none;margin-left:auto}
+.switch::after{content:"";position:absolute;top:2.5px;left:20px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .18s}
+.switch[aria-pressed="false"]{background:var(--app-line)}
+.switch[aria-pressed="false"]::after{left:2.5px}
+
+/* success burst */
+.burst{
+  width:76px;height:76px;border-radius:50%;display:grid;place-items:center;
+  background:var(--app-pine);color:#fff;margin:0 auto;
+  box-shadow:0 0 0 12px var(--app-mint);
+}
+
+/* ============================================================
+   NOTES PANEL
+   ============================================================ */
+.notes h2{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:6px 0 10px}
+.notes .n-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.notes .n-list li{display:flex;gap:9px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.notes .n-list li::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+  flex:none;margin-top:8px;
+}
+.n-why{
+  margin-top:20px;padding:14px;border-radius:13px;
+  background:var(--stage);border:1px solid var(--line-soft);
+}
+.n-why p{font-size:13.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.n-nav{display:flex;gap:8px;margin-top:22px}
+.n-nav button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px;border-radius:11px;border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--ink-2);background:var(--stage-2);
+}
+.n-nav button:hover:not(:disabled){background:var(--stage-3);color:var(--ink)}
+.n-nav button:disabled{opacity:.4;cursor:not-allowed}
+.n-foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .layout{grid-template-columns:1fr;min-height:0}
+  .rail{
+    position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);
+    display:flex;gap:8px;overflow-x:auto;padding:12px 16px;
+  }
+  .rail-group{display:flex;align-items:center;gap:8px;margin:0}
+  .rail-group > .eyebrow{padding:0 4px 0 6px;white-space:nowrap}
+  .rail-item{width:auto;white-space:nowrap;border:1px solid var(--line);padding:7px 12px}
+  .rail-item .num{display:none}
+  .notes{position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}
+}
+@media (max-width:520px){
+  .phone-wrap{--s:.78}
+  .stage{padding:20px 10px 34px}
+  .topbar{padding:14px 16px}
+}
+
+
+.a-h1{font-size:33px;font-weight:500;letter-spacing:-.01em;line-height:1.1}.a-h2{font-size:23px;font-weight:500;letter-spacing:-.005em}.stat b{font-size:23px;font-weight:500}
+.a-label,.eyebrow{font-weight:700;font-size:9.5px;letter-spacing:.12em}
+.quote{font-size:15px}.mark{font-size:20px;font-weight:600;border-radius:9px}.topbar-title strong{font-size:22px;font-weight:500}
+.btn{font-weight:700}.btn.amber{color:#2F3538}
+.pill.sand{color:#7A5C14}
+.bubble{max-width:82%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.45}
+.bubble.in{background:var(--app-surface);border:1px solid var(--app-line);border-bottom-left-radius:5px;align-self:flex-start}
+.bubble.out{background:var(--app-pine);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.bubble small{display:block;font-size:10.5px;opacity:.6;margin-top:4px}
+.bubble .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bubble .acts button{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;background:var(--app-mint);color:#4A5256}
+.typing{display:flex;gap:4px;padding:13px 14px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--app-muted);animation:bl 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.slotgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slotbtn{padding:10px 4px;border-radius:13px;border:1.5px solid var(--app-line);background:var(--app-surface);text-align:center;font-size:13px;font-weight:700}
+.slotbtn small{display:block;font-size:10.5px;font-weight:500;color:var(--app-muted);margin-top:1px}
+.slotbtn[aria-pressed="true"]{border-color:#E3B556;background:#F8EFD7;color:#7A5C14}
+.slotbtn:disabled{opacity:.45;cursor:not-allowed}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--app-line);background:var(--app-surface);font-size:17px;font-weight:700;line-height:1}
+.stepper b{font-family:var(--display);font-size:22px;font-weight:500;min-width:20px;text-align:center}
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.qa{display:flex;gap:10px;align-items:center;text-align:left;padding:12px;border-radius:15px;background:var(--app-surface);border:1px solid var(--app-line);font-size:13px;font-weight:700;line-height:1.25}
+.qa i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--app-mint);color:#4A5256;flex:none}
+.qa:hover{border-color:#E3B556}
+.menu-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--app-line);align-items:flex-start}
+.menu-item:last-child{border-bottom:0}
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--app-line)}
+.tl{position:relative;padding:0 0 16px}
+.tl::before{content:"";position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--app-surface);border:2.5px solid var(--app-pine-2)}
+.tl.now::before{border-color:#E3B556;background:#E3B556}
+.tl.sug::before{border-style:dashed;border-color:var(--app-muted)}
+.tl .t{font-size:11px;color:var(--app-muted);font-weight:700}
+.payopt{width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:13px;border:1.5px solid var(--app-line);border-radius:15px;background:var(--app-surface);font-size:13.5px;font-weight:700}
+.payopt[aria-pressed="true"]{border-color:#E3B556;background:#F8EFD7}
+.payopt .radio{margin:0}
+.payopt[aria-pressed="true"] .radio{border-color:#E3B556;background:#E3B556;color:#2F3538}
+.qrbox{background:#fff;border-radius:20px;padding:16px;border:1px solid var(--app-line);display:grid;place-items:center}
+.hrow{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--app-line)}
+.hrow:last-child{border-bottom:0}.hrow b{font-size:13.5px;font-weight:700}.hrow .h{margin-left:auto;font-size:12.5px;color:var(--app-ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.price{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.burst{background:#E3B556;color:#2F3538;box-shadow:0 0 0 12px #F8EFD7}
+.step{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.step:last-child{border-bottom:0}
+.tick.done{background:#6B7A62;border-color:#6B7A62}
+.rowlist .menu-item{align-items:center}
+</style></head><body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></symbol><symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol><symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol><symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M7 3v6M17 21V3c-2.5 1.5-3 5-3 8h3"/></symbol><symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2L19 19M19 5l-1.8 1.8M6.8 17.2L5 19"/></symbol><symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol><symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6.1 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 14.9 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></symbol><symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L20 4l-6 16-2.5-6.5z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h3"/></symbol><symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18h2"/></symbol><symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8.5 7.5L12 4l3.5 3.5"/><path d="M5.5 13v5.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V13"/></symbol><symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol><symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8h14v-8M12 8c-2-4-6-3-5 0 .6 1.6 3 1.5 5 0zM12 8c2-4 6-3 5 0-.6 1.6-3 1.5-5 0z"/></symbol><symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></symbol><symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.500" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5 2.500-5 4.500 0 1.500 1.500 2 3 1.500 1-.300 1.500-.500 2-.500s1 .200 2 .500c1.500.500 3 0 3-1.500 0-2-2-4.500-5-4.500z"/></symbol><symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.500A8 8 0 0 1 9.500 4a8 8 0 1 0 10.500 10.500z"/></symbol></svg>
+<header class="topbar"><div class="mark">T</div><div class="topbar-title"><strong>Twin&nbsp;Farms&nbsp;Guest&nbsp;App</strong><span>Concept prototype · a branded guest app for Twin Farms</span></div><span class="tag hot">Clickable</span><span class="tag">14 screens</span><span class="tag">iOS &amp; Android</span><button class="tag toggle" id="notes-toggle" aria-pressed="false" title="Presenter notes (N)">Notes</button></header>
+<div class="layout"><nav class="rail" id="rail" aria-label="Screen index">
+<div class="rail-group"><div class="eyebrow">Arrival</div><button class="rail-item" data-go="welcome"><span class="num">01</span>Welcome</button><button class="rail-item" data-go="home"><span class="num">02</span>Today</button></div>
+<div class="rail-group"><div class="eyebrow">Discover</div><button class="rail-item" data-go="experiences"><span class="num">03</span>Activities</button><button class="rail-item" data-go="dining"><span class="num">04</span>Dining</button><button class="rail-item" data-go="spa"><span class="num">05</span>Spa &amp; wellness</button><button class="rail-item" data-go="events"><span class="num">06</span>What's on</button></div>
+<div class="rail-group"><div class="eyebrow">Book without calling</div><button class="rail-item" data-go="slots"><span class="num">07</span>Pick a time</button><button class="rail-item" data-go="checkout"><span class="num">08</span>Checkout</button><button class="rail-item" data-go="confirmed"><span class="num">09</span>Confirmed</button><button class="rail-item" data-go="pass"><span class="num">10</span>Reservation pass</button></div>
+<div class="rail-group"><div class="eyebrow">During your stay</div><button class="rail-item" data-go="chat"><span class="num">11</span>Experience Curators</button><button class="rail-item" data-go="services"><span class="num">12</span>Room &amp; services</button><button class="rail-item" data-go="offers"><span class="num">13</span>Offers</button><button class="rail-item" data-go="stay"><span class="num">14</span>My stay</button></div></nav><main class="stage"><div class="phone-wrap"><div class="phone"><div class="screen">
+<section class="view" data-view="welcome" style="background:linear-gradient(180deg,#2F3538 0%,#22282A 31%,#FAF8F3 31.1%,#FAF8F3 100%)"><div class="statusbar on-dark"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll" style="display:flex;flex-direction:column">
+<div style="position:relative;height:204px;flex:none;display:grid;place-items:center;overflow:hidden"><img alt="Twin Farms" src="data:image/png;base64,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" style="position:relative;width:250px;height:auto;display:block;margin-top:-6px"></div>
+<div class="pad stack" style="gap:14px;margin-top:14px"><span class="a-label">Barnard · Vermont</span>
+<h1 class="a-h1" style="font-size:35px">Welcome home.</h1>
+<p style="font-size:14.5px;line-height:1.55;color:var(--app-ink-2)">Your own private estate, in your pocket: reserve dinner, a picnic, the Onsen or the spa, and reach your Experience Curators, all from your phone.</p>
+<div style="display:flex;gap:20px;margin:4px 0 2px"><div><b style="font-family:var(--display);font-size:25px;font-weight:500">300</b><div style="font-size:11px;color:var(--app-muted)">acres of Vermont</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">28</b><div style="font-size:11px;color:var(--app-muted)">cottages &amp; suites</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">17,000</b><div style="font-size:11px;color:var(--app-muted)">bottles in the cellar</div></div></div>
+<button class="btn amber" data-go="home" style="margin-top:8px">Add my reservation</button>
+<button class="btn outline" data-go="home">Sign in</button>
+<p style="font-size:11.5px;color:var(--app-muted);text-align:center;margin:2px 0 22px">Use the reservation number from your confirmation email</p></div></div></section>
+<section class="view" data-view="home"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><span class="a-label">Friday, Nov 6</span><h2 class="a-h2" style="margin-top:1px">Good afternoon, Emily</h2></div><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" id="home-body" style="gap:20px;padding-bottom:16px"></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="experiences"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Experiences</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="experiences-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="dining"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Dining</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="dining-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="spa"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Spa & wellness</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="spa-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="events"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">What's on</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="events-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="services"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Room & services</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="services-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="offers"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Offers</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="offers-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="slots"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="experiences" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2" id="slots-title">Book</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="slots-body" style="gap:18px"></div></div></section>
+<section class="view" data-view="checkout"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="slots" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Checkout</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="checkout-body" style="gap:16px"></div></div></section>
+<section class="view" data-view="confirmed"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll stack" style="gap:18px;padding:14px 0 18px"><div class="pad stack" id="confirmed-body" style="gap:18px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="pass"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="confirmed" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Reservation pass</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="pass-body" style="gap:16px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="chat"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><h2 class="a-h2">Experience Curators</h2><span class="a-meta" style="display:flex;align-items:center;gap:5px"><i style="width:7px;height:7px;border-radius:50%;background:#6B7A62;display:inline-block"></i>Online · Twin Farms</span></div><button class="icon-btn" aria-label="Call"><svg width="18" height="18"><use href="#i-phone"/></svg></button></div>
+<div class="app-scroll stack" id="msgs" style="gap:10px;padding:6px 20px 12px"></div>
+<div class="chips" id="sugg" style="padding-bottom:6px"></div>
+<form id="chat-form" style="flex:none;display:flex;gap:9px;padding:6px 16px 12px"><input id="chat-inp" autocomplete="off" placeholder="Ask anything…" style="flex:1;min-width:0;border:1px solid var(--app-line);background:var(--app-surface);border-radius:14px;padding:11px 14px;font:inherit;font-size:13.5px;color:var(--app-ink);outline:none"><button class="icon-btn" style="background:var(--app-pine);color:#fff;border:0;width:44px;height:44px;border-radius:14px" aria-label="Send"><svg width="18" height="18"><use href="#i-send"/></svg></button></form>
+<nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="stay"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">My stay</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="stay-body" style="gap:18px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+</div></div></div><div class="stage-hint"><span class="dot"></span>Everything is clickable: reserve dinner, a picnic, the Onsen or the spa, message the Experience Curators. Arrow keys switch screens.</div></main>
+<aside class="notes"><span class="eyebrow" id="n-group"></span><h2 id="n-title"></h2><p id="n-lede" style="font-size:13.5px;color:var(--muted);line-height:1.5"></p><ul class="n-list" id="n-list"></ul>
+<div class="n-why"><span class="eyebrow">Why it matters for Twin Farms</span><p id="n-why"></p></div>
+<div class="n-nav"><button id="prev"><svg width="15" height="15"><use href="#i-left"/></svg>Previous</button><button id="next">Next<svg width="15" height="15"><use href="#i-right"/></svg></button></div>
+<p class="n-foot">Concept prototype, not a live product. Availability, times and guest details are illustrative. Menus, prices, dining hours, seatings, spa treatments, activities, events and policies are taken from the public Twin Farms website; Onsen and spa appointment times, class fees and the daily activity schedule are placeholders (the site does not publish them). In production this connects to the resort's reservation, dining, spa and billing systems, and the Online Concierge Form it already has.</p></aside></div>
+<script>(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function svg(i,w){return '<svg width="'+(w||18)+'" height="'+(w||18)+'"><use href="#i-'+i+'"/></svg>'}
+
+var ORDER=["welcome","home","experiences","dining","spa","events","slots","checkout","confirmed","pass","chat","services","offers","stay"];
+var NOTES={
+welcome:{group:"Arrival",title:"Welcome",lede:"The first ten seconds, in Twin Farms' own gold script, tone and voice.",list:["'Welcome home' is the resort's own line.","Real facts up front: 300 acres, 28 cottages and suites, a 17,000-bottle cellar."],why:"At Twin Farms the service is the product. The app should feel like a private house, not a hotel system."},
+home:{group:"Arrival",title:"Today",lede:"One calm screen for arrival day.",list:["Digital key and cottage details first.","Real rhythm of the day: check-in at 4:00 PM, cocktails and canapés each evening, dinner at the chosen seating.","Today's plan mixes confirmed bookings with one suggestion."],why:"Everything is included, so the only decisions are timing. The app makes them in a tap instead of a phone call."},
+activities:{},
+experiences:{group:"Discover",title:"Activities",lede:"What is included, and what needs a reservation.",list:["Hiking, biking, tennis, pickleball, lawn games, archery and more are included, with equipment and instruction.","Picnics are by reservation, the Onsen on the hour for 30 minutes, classes by sign-up with six guests maximum.","Today this is a Daily Activities Schedule and phone calls to the Experience Curators."],why:"Limited-capacity moments (Onsen, classes, picnics) are exactly what is hard to coordinate by phone."},
+dining:{group:"Discover",title:"Dining",lede:"The Dining Room, Twiggs and the enhancements.",list:["Dinner needs a reservation every night, at one of five seatings, in the Dining Room or at Twiggs. Today that is a call or an email to the Experience Curators.","Breakfast and lunch are open seating and need nothing.","Surcharged experiences carry their real price and rules: Chef's Kitchen Table $500, Wine Cellar dinner $250, Krug & caviar $900 with 48 hours' notice."],why:"The reservation that every guest must make, every night, is the single most useful thing an app can take over."},
+spa:{group:"Discover",title:"Spa & wellbeing",lede:"Bridge House Spa, the Onsen and complimentary classes.",list:["Treatments use the real menu and prices, and the 24-hour cancellation rule.","The Onsen is booked on the hour for 30 minutes, which is exactly what a slot grid is for.","Spa and private training are the main extras outside the all-inclusive rate."],why:"Spa and Onsen slots are perishable inventory. Easy booking fills the quiet hours."},
+events:{group:"Discover",title:"Events",lede:"The event calendar, in the app.",list:["White Truffle Dinner Weekend, wine weekends, the Off Script author series, Thanksgiving, Christmas and New Year's Eve come straight from the calendar.","A guest who sees an event during a stay is the best lead for the next one."],why:"Events sell the next stay. An in-stay reminder beats a newsletter."},
+slots:{group:"Book without calling",title:"Pick a time",lede:"Fully working: day, time, guests and options, with each experience's own rules.",list:["Dinner uses the five real seatings, 6:00 to 8:00 PM.","Krug & caviar only opens from two days out (48 hours' notice).","Included things show 'No charge'; surcharged ones show their price."],why:"The rules become the app's logic, so guests cannot book something that is not possible."},
+checkout:{group:"Book without calling",title:"Checkout",lede:"Included or charged to the room.",list:["Included experiences cost nothing.","Surcharges go to the room, plus tax."],why:"Frictionless payment turns browsing into booking."},
+confirmed:{group:"Book without calling",title:"Confirmed",lede:"The confirmation, built from the booking just made.",list:["Reservation number, time, party size and location.","One-tap reminder."],why:"Fewer no-shows and last-minute changes."},
+pass:{group:"Book without calling",title:"Reservation pass",lede:"A QR code for the host to scan.",list:["No paper vouchers."],why:"A clean record of who is where."},
+chat:{group:"During your stay",title:"Experience Curators",lede:"The resort's own Experience Curators, in the guest's pocket. Try 'dogs', 'dress code' or 'what is included'.",list:["Twin Farms already has an Online Concierge Form. The app turns it into a live conversation.","Answers use the resort's real policies: adults only (14+), dogs $75 a day, smart country-casual."],why:"Every question that would have been a call is answered, and every request is recorded."},
+services:{group:"During your stay",title:"Cottage & services",lede:"Everything promised in the room, one tap away.",list:["In-room dining around the clock, same-day laundry, a fire laid, bikes, airport transfers.","Staff see the request instantly."],why:"Small services shape how a stay feels, and they are easy to miss when you have to ask."},
+offers:{group:"During your stay",title:"Offers",lede:"The resort's real offers and gifts.",list:["Long Stay: 7 or more nights, one night on the house and a $400 wine credit.","Gift certificates, and a direct way to the next stay."],why:"A guest who sees the next stay during this one books it before leaving."},
+stay:{group:"During your stay",title:"My stay",lede:"Reservation, charges and contacts.",list:["Room charges update as bookings are charged to the room.","Check-in 4:00 PM, check-out 11:00 AM, as stated on the site."],why:"Fewer calls to reception and a smoother check-out."}
+};
+var TABS=[
+{id:"home",label:"Today",icon:"i-home",match:["home"]},
+{id:"experiences",label:"Discover",icon:"i-compass",match:["experiences","dining","spa","events","slots","checkout","confirmed","pass"]},
+{id:"chat",label:"Curators",icon:"i-chat",match:["chat"]},
+{id:"services",label:"Services",icon:"i-star",match:["services","offers"]},
+{id:"stay",label:"My stay",icon:"i-user",match:["stay"]}];
+document.querySelectorAll("[data-tabbar]").forEach(function(bar){
+bar.innerHTML=TABS.map(function(t){return '<button class="tab" data-go="'+t.id+'" data-tab="'+t.id+'"><svg><use href="#'+t.icon+'"/></svg>'+t.label+'</button>';}).join("")});
+
+var DAYS=[["Fri","Nov",6],["Sat","Nov",7],["Sun","Nov",8],["Mon","Nov",9]];
+var SEATINGS=["6:00 PM","6:30 PM","7:00 PM","7:30 PM","8:00 PM"];
+var ONSEN=["7:00 AM","9:00 AM","11:00 AM","2:00 PM","4:00 PM","6:00 PM","9:00 PM"];
+var ACTS={
+table:{name:"Dinner reservation",defHour:"7:30 PM",short:"dinner",price:0,unit:"guest",durs:[120],mult:{120:1},cap:8,hours:SEATINGS,
+ vars:[
+ ["The Dining Room",0,SEATINGS,"A multi-course tasting menu inspired by Vermont's seasons, composed by Executive Chef Nathan Rich, with optional sommelier-selected wine pairings. Included in your stay."],
+ ["Twiggs",0,SEATINGS,"Steaks, chops, fish and pastas from the Argentine-style wood-fired grill. The bar opens at 3:00 PM for light bites and drinks. Included in your stay."]
+ ],addons:[["Sommelier wine pairings",0],["Celebration note to the team",0]],cls:"t-dining",maxQty:8,note:"Dinner reservations are required each evening of your stay. Smart country-casual dress."},
+picnic:{name:"Picnic",defHour:"12:30 PM",short:"picnic",price:0,unit:"guest",durs:[120],mult:{120:1},cap:6,hours:["11:30 AM","12:30 PM","1:30 PM"],
+ vars:[
+ ["The Lift Shack",0,null,"A fully enclosed cold-weather picnic on the ski hill, with indoor and outdoor fireplaces. 2 miles round trip, a difficult hike; car access available."],
+ ["The Lean-to",0,null,"A three-sided log structure with views of Twin Farms and Copper Pond, a fire pit and a bean bag for two. 2 miles round trip, moderate; no car access."],
+ ["Jakes' Fishing Shack",0,null,"A screened-in shack at the far end of Copper Pond, with a fire pit and rocking chairs. 0.5 mile round trip, easy walk; fishing gear supplied."],
+ ["Doug's Treehouse Folly",0,null,"A covered deck up a spiral staircase, with a cozy couch and views for miles. 2 miles round trip, moderate; no car access."],
+ ["Farm Pergola",0,null,"Among the Kitchen Gardens, with Mt. Ascutney in the distance. 0.25 mile round trip, very easy; car access."]
+ ],addons:[["Hot drinks &amp; fire laid",0]],cls:"t-picnic",maxQty:6,note:"Picnics are included and by reservation. We deliver before you arrive and clear away after."},
+onsen:{name:"The Onsen",defHour:"4:00 PM",short:"the Onsen",price:0,unit:"guest",durs:[30],mult:{30:1},cap:2,hours:ONSEN,vars:null,addons:[],cls:"t-onsen",maxQty:4,note:"A private Shou Sugi Ban House in the woods, with an 8,000-gallon, 104°F salt-water Onsen. Booked on the hour, 30 minutes per soak. Included. Times shown are illustrative."},
+spa:{name:"Spa treatment",defHour:"3:00 PM",short:"spa treatment",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:2,durs:[60],mult:{60:1},cap:3,hours:["10:00 AM","12:00 PM","2:00 PM","4:00 PM"],
+ vars:[
+ ["Relaxation Massage · 60 min",0,null,null,275],
+ ["Relaxation Massage · 90 min",0,null,null,390],
+ ["Deep Tissue Massage · 60 min",0,null,null,285],
+ ["Infrared Massage · 60 min",0,null,null,305],
+ ["Marine Collagen Facial · 60 min",0,null,null,325],
+ ["Infrared Facial · 60 min",0,null,null,375]],
+ addons:[["In your cottage (where offered)",0]],cls:"t-spa",note:"Bridge House Spa, with Biologique Recherche. Not part of the inclusive rate. 24 hours' notice to avoid the full charge; same-day bookings are final. Appointment times are illustrative."},
+chefs:{name:"Chef's Kitchen Table",defHour:"7:00 PM",short:"the Chef's Table",price:500,unit:"guest",qty:"Guests",minQty:2,maxQty:8,durs:[150],mult:{150:1},cap:2,hours:["7:00 PM"],vars:null,addons:[],cls:"t-kitchen",note:"A multi-course tasting menu at the heart of the Forbes Five-Star kitchen, with reserve wine pairings by Wine Director Ryan Bogdan. $500 per person plus tax, two to eight guests, about two and a half hours."},
+cellar:{name:"Private Wine Cellar dinner",defHour:"7:00 PM",short:"the Wine Cellar dinner",price:250,unit:"guest",qty:"Guests",minQty:2,maxQty:6,durs:[150],mult:{150:1},cap:1,hours:["6:30 PM","7:30 PM"],vars:null,addons:[],cls:"t-cellar",note:"Five courses with sommelier-paired wines under the arched brick ceiling of the candle-lit Wine Cellar. $250 per person, two to six guests. Seating times are illustrative."},
+krug:{name:"Krug Champagne & Caviar",defHour:"5:00 PM",short:"Krug &amp; caviar",flat:900,price:900,unit:"booking",qty:"Guests",minQty:2,maxQty:4,days:[2,3],durs:[60],mult:{60:1},cap:1,hours:["4:30 PM","5:00 PM","5:30 PM"],vars:[["In your cottage",0],["Before dinner at the Barn Room",0],["The Lift Shack",0]],addons:[],cls:"t-krug",note:"60 grams of Ossetra caviar with the traditional accoutrements and a bottle of Krug, $900 plus tax. By reservation with 48 hours' notice, so it opens from two days out."},
+class:{name:"Pasta making class",defHour:"3:00 PM",short:"the pasta class",price:75,unit:"guest",qty:"Guests",minQty:1,maxQty:6,durs:[90],mult:{90:1},cap:6,hours:["11:00 AM","3:00 PM"],vars:null,addons:[],cls:"t-twiggs",note:"Hands-on at Twiggs with the kitchen team, about 90 minutes, paired with wine. Six guests maximum. The guided-activity fee shown is illustrative."},
+pilates:{name:"Mat Pilates",defHour:"8:30 AM",short:"Mat Pilates",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:8,durs:[60],mult:{60:1},cap:8,hours:["8:30 AM","4:30 PM"],vars:null,addons:[],cls:"t-spa",note:"A complimentary one-hour, low-impact class in the Fitness Center, to improve strength, core and flexibility. Class times are illustrative."}
+};
+var B={act:"table",day:0,hour:"7:30 PM",guests:2,dur:90,vari:0,addons:{},pay:"room",paid:false};
+var extra=[],charged=0;
+function money(n){return n===0?"No charge":"$"+n.toLocaleString("en-US",{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})}
+function qtyStr(a,n){return n+" "+(n===1?"guest":"guests")}
+function dayLabelFor(i){var d=DAYS[i];return d[0]+", "+d[1]+" "+d[2]}
+function dayLabel(){return dayLabelFor(B.day)}
+function hoursFor(a){var v=a.vars&&a.vars[B.vari];if(v&&v[2])return v[2];return a.hours}
+function spots(a,day,h){var s=0,k=a+day+h;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))>>>0;var c=ACTS[a].cap;var taken=s%(c+2);return Math.max(1,c-Math.min(taken,c-1))}
+function perPerson(a){var v=a.vars&&a.vars[B.vari];if(v&&v[4])return v[4];return a.price+(v?v[1]:0)}
+function baseTotal(){var a=ACTS[B.act];if(a.flat)return a.flat;return perPerson(a)*B.guests}
+function total(){var a=ACTS[B.act],ex=0;Object.keys(B.addons).forEach(function(i){if(B.addons[i])ex+=a.addons[i][1]*B.guests});return Math.round((baseTotal()+ex)*100)/100}
+function noteOf(a){var v=a.vars&&a.vars[B.vari];return (v&&v[3])||a.note}
+function setAct(k,v){var a=ACTS[k];B.act=k;B.dur=a.durs[0];B.vari=v||0;B.addons={};B.day=a.days?a.days[0]:0;var hs=hoursFor(a);B.hour=(a.defHour&&hs.indexOf(a.defHour)>-1)?a.defHour:hs[Math.min(1,hs.length-1)];B.guests=a.minQty||2;if(B.guests>(a.maxQty||8))B.guests=a.maxQty}
+function pill(t,c){return '<span class="pill'+(c?" "+c:"")+'">'+t+'</span>'}
+function rowH(cls,title,meta,pl,attr){return '<button class="row" '+attr+'><span class="thumb '+cls+'" style="width:70px;height:62px"></span><span class="row-body"><span class="t">'+title+'</span><span class="a-meta">'+meta+'</span><span>'+pl+'</span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>'}
+function heroH(cls,title,sub,label,h){return '<div class="thumb '+cls+'" style="width:100%;height:'+(h||124)+'px;display:block"><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;text-align:left;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,0) 25%,rgba(0,0,0,.42))">'+(label?'<span class="a-label" style="color:rgba(255,255,255,.88)">'+label+'</span>':'')+'<span style="font-family:var(--display);font-size:26px;font-weight:500;letter-spacing:-.005em;line-height:1.08">'+title+'</span><span style="font-size:12px;color:rgba(255,255,255,.92);margin-top:2px">'+sub+'</span></span></div>'}
+
+function renderHome(){var h='';
+h+='<div class="card hero-pine" style="padding:15px;border:0;margin:0 20px;flex:none"><svg class="deco" viewBox="0 0 380 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#E3B556" stroke-width="1" opacity=".4"><path d="M-10 96c70-46 120 16 190-22s120 10 210-30"/><path d="M-10 114c70-46 120 16 190-22s120 10 210-30"/></g></svg>'+
+'<div style="position:relative"><span class="a-label" style="color:rgba(255,255,255,.65)">Your stay</span><div style="font-family:var(--display);font-size:27px;font-weight:500;letter-spacing:-.005em;margin-top:3px;line-height:1.1">Twin Farms</div><div style="font-size:12px;color:rgba(255,255,255,.78);margin-top:3px">Aviary cottage · Barnard, Vermont</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Nov 6 – 9 · 2 adults · all inclusive</div>'+
+'<div style="display:flex;gap:8px;margin-top:13px"><button class="btn amber sm" style="flex:1" data-toast="Digital key sent to your phone">Unlock door</button><button class="btn sm" style="flex:1;background:rgba(255,255,255,.16)" data-go="stay">Stay details</button></div></div></div>';
+h+='<div class="card" style="padding:12px 14px;margin:0 20px;flex:none"><div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:6px">'+[["4 PM","Check-in"],["6 PM","Canapés"],["24 h","Onsen"]].map(function(c){return '<div><b style="display:block;font-family:var(--display);font-size:21px;font-weight:500;color:var(--app-ink)">'+c[0]+'</b><span class="a-label">'+c[1]+'</span></div>'}).join("")+'</div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Your plan today</h3><button class="link" data-go="stay">Stay details</button></div><div class="timeline">'+
+'<div class="tl now"><span class="t">4:00 PM</span><div class="a-h3">Check-in · cottage ready, digital key active</div><span class="a-meta">Aviary · stone hot tub and fieldstone fireplace</span></div>'+
+'<div class="tl"><span class="t">6:00 PM</span><div class="a-h3">Cocktails and canapés</div><span class="a-meta">Included · every evening</span></div>'+
+'<div class="tl"><span class="t">7:30 PM</span><div class="a-h3">Dinner in the Dining Room</div><span class="a-meta">Table for 2 · Confirmed</span></div>'+
+'<div class="tl sug"><span class="t">Suggested</span><div class="a-h3">Tomorrow: lunch at the Lift Shack</div><button class="pill sand" data-book="picnic" style="margin-top:4px">Reserve a picnic · included</button></div></div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Quick actions</h3></div><div class="qgrid">'+
+'<button class="qa" data-go="dining"><i>'+svg("fork")+'</i>Reserve dinner</button><button class="qa" data-book="onsen"><i>'+svg("drop")+'</i>Book the Onsen</button><button class="qa" data-go="experiences"><i>'+svg("compass")+'</i>Activities</button><button class="qa" data-go="chat"><i>'+svg("chat")+'</i>Message the team</button></div></div>';
+$("#home-body").innerHTML=h}
+
+function renderExperiences(){var h=heroH("t-trail","Activities","All included, with equipment and instruction","Twin Farms");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-picnic","Picnics","A dozen settings, delivered and cleared away",pill("Included","sand"),'data-book="picnic"')+
+rowH("t-onsen","The Onsen","Private salt-water soak · 104°F · 30 minutes",pill("Included","sand"),'data-book="onsen"')+
+rowH("t-twiggs","Pasta making class","At Twiggs · with wine · six guests",pill("Guided fee"),'data-book="class"')+
+rowH("t-spa","Mat Pilates","Fitness Center · one hour",pill("Included","sand"),'data-book="pilates"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Included · explore on your own</span>'+
+[["Hiking","Miles of manicured trails with picnic platforms"],["Bicycling","Cruisers, hardtails and pedal-assist e-bikes"],["Tennis &amp; pickleball","One hard court and four pickleball courts"],["Lawn games","Croquet, bocce and cornhole by the Main House"],["Canoe, kayak &amp; paddleboard","Copper Pond, and Silver Lake 1.5 miles away"],["Archery &amp; axe throwing","Supervised, by the ski warming hut"]].map(function(r){return '<button class="list-item" data-toast="Request sent: '+r[0]+'"><span style="flex:1">'+r[0]+'<span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></span>'+pill("Request","sand")+'</button>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Also with the team</span><div class="list-item">'+svg("check")+'Art History Tour of the 1795 Main House</div><div class="list-item">'+svg("check")+'Watercolor painting with our artist, Myra</div><div class="list-item">'+svg("check")+'Grilling, pickling and sauce classes at Twiggs</div><div class="list-item">'+svg("check")+'Guided meditation and a labyrinth walk</div><button class="list-item" data-go="chat">'+svg("chat")+'Ask the Experience Curators<span class="v">›</span></button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center;background:var(--app-sand);border-color:transparent"><div style="flex:1"><span class="a-label">Winter</span><div class="a-h3" style="margin-top:2px">Private ski hill, ice rink and sledding open when snow allows, usually from mid to late January</div></div></div>';
+$("#experiences-body").innerHTML=h}
+
+function renderDining(){var h=heroH("t-dining","Farm to table","Executive Chef Nathan Rich · Forbes Five-Star","Dining");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-dining","The Dining Room","Tasting menu · dinner 6:00 – 8:00 PM",pill("Included","sand"),'data-res="0"')+
+rowH("t-twiggs","Twiggs","Wood-fired grill · bar from 3:00 PM",pill("Included","sand"),'data-res="1"')+
+rowH("t-kitchen","Chef's Kitchen Table","Inside the Forbes Five-Star kitchen · 2 to 8 guests",pill("$500 per person","clay"),'data-book="chefs"')+
+rowH("t-cellar","Private Wine Cellar dinner","Five courses · 2 to 6 guests",pill("$250 per person","clay"),'data-book="cellar"')+
+rowH("t-krug","Krug Champagne &amp; Caviar","60 g Ossetra · 48 hours' notice",pill("$900 + tax","clay"),'data-book="krug"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Open seating · no reservation</span><div class="hrow"><b>Breakfast</b><span class="h">7:00 – 10:00 AM</span></div><div class="hrow"><b>Lunch</b><span class="h">12:30 – 2:00 PM</span></div><div class="hrow"><b>In-room dining</b><span class="h">Day and night</span></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">The Wine Cellar</span><div class="hrow"><b>17,000 bottles</b><span class="h">Wine Spectator Award 2024</span></div><div class="hrow"><b>Wine Director</b><span class="h">Ryan Bogdan</span></div><div class="hrow"><b>Reserve Wine List</b><span class="h">Additional cost</span></div></div>';
+h+='<div class="quote">Dinner reservations are required every night of your stay, at 6:00, 6:30, 7:00, 7:30 or 8:00 PM.<span class="who">Twin Farms</span></div>';
+$("#dining-body").innerHTML=h}
+
+function renderSpa(){var h=heroH("t-spa","Bridge House Spa","Under Twin Farms' own covered bridge","Spa & wellbeing");
+h+='<p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">Massages and signature facials with Biologique Recherche, in two treatment rooms or in your cottage, followed by the steam room. Spa services are the one thing outside the inclusive rate.</p><button class="btn amber" data-book="spa">Book a treatment</button>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Treatments</span><div class="hrow"><b>Relaxation Massage</b><span class="h">60 min $275 · 90 min $390</span></div><div class="hrow"><b>Deep Tissue Massage</b><span class="h">60 min $285</span></div><div class="hrow"><b>Infrared Massage</b><span class="h">60 min $305</span></div><div class="hrow"><b>Marine Collagen Facial</b><span class="h">60 min $325</span></div><div class="hrow"><b>Infrared Facial</b><span class="h">60 min $375</span></div></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center;background:var(--app-sand);border-color:transparent"><div style="flex:1"><span class="a-label">The Onsen · included</span><div class="a-h3" style="margin-top:2px">An 8,000-gallon, 104°F salt-water bath in a Shou Sugi Ban House in the woods</div></div><button class="btn amber sm" style="width:auto" data-book="onsen">Book</button></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Wellbeing · included</span><div class="hrow"><b>Fitness Center</b><span class="h">Open 24/7</span></div><div class="hrow"><b>Mat Pilates</b><span class="h">1 hour</span></div><div class="hrow"><b>Yoga &amp; paddle board yoga</b><span class="h">Complimentary</span></div><div class="hrow"><b>Guided meditation</b><span class="h">By appointment</span></div><div class="hrow"><b>Private training</b><span class="h">Additional fee</span></div></div>';
+$("#spa-body").innerHTML=h}
+
+function renderEvents(){var h=heroH("t-event","Events","On the Farm · Off Script","Calendar");
+var ev=[["t-krug","White Truffle Dinner Weekend","Sat 7 Nov · Autumn in Vermont",pill("Reserve","clay"),'data-toast="Request sent: White Truffle Dinner Weekend"'],
+["t-cellar","Rutledge &amp; Vine Wine Weekend","Nov 20 – 22",pill("Notify me","sand"),'data-toast="You will be notified: Rutledge &amp; Vine Wine Weekend"'],
+["t-event","Off Script with Garrett M. Graff","Nov 19 – 22 · author series",pill("Notify me","sand"),'data-toast="You will be notified: Off Script, Garrett M. Graff"'],
+["t-dining","Thanksgiving Dinner Celebration","Thu 26 Nov",pill("Notify me","sand"),'data-toast="You will be notified: Thanksgiving"'],
+["t-gift","Christmas Dinner &amp; New Year\'s Eve","Dec 25 and Dec 31",pill("Notify me","sand"),'data-toast="You will be notified: Christmas and New Year\'s Eve"'],
+["t-event","Off Script with Danny Meyer &amp; Dorothy Kalins","Jan 14 – 17, 2027",pill("Notify me","sand"),'data-toast="You will be notified: Danny Meyer"'],
+["t-krug","Krug x Single Ingredient Weekend","Jan 29 – 31, 2027",pill("Notify me","sand"),'data-toast="You will be notified: Krug x Single Ingredient"'],
+["t-event","Off Script with Ken Burns","Feb 25 – 28, 2027",pill("Notify me","sand"),'data-toast="You will be notified: Ken Burns"']];
+h+='<div class="stack rowlist" style="gap:9px">'+ev.map(function(e){return rowH(e[0],e[1],e[2],e[3],e[4])}).join("")+'</div>';
+h+='<div class="quote">Special culinary events may carry a surcharge. Your Experience Curators confirm it before you reserve.<span class="who">Twin Farms</span></div>';
+$("#events-body").innerHTML=h}
+
+function renderSlots(){var a=ACTS[B.act];$("#slots-title").textContent="Book "+a.short;
+var hs=hoursFor(a);if(hs.indexOf(B.hour)<0)B.hour=hs[Math.min(1,hs.length-1)];
+var h='<div class="week" style="width:100%">'+DAYS.map(function(d,i){var off=a.days&&a.days.indexOf(i)<0;return '<button class="day" data-bk-day="'+i+'" aria-pressed="'+(i===B.day)+'" '+(off?'disabled style="opacity:.35"':'')+'>'+d[0]+'<b>'+d[2]+'</b></button>'}).join("")+'</div>';
+var note=noteOf(a);
+if(note)h+='<div class="quote">'+note+'<span class="who">Twin Farms</span></div>';
+if(a.vars)h+='<div><span class="a-label">'+(B.act==="table"?"Where":B.act==="picnic"?"Setting":B.act==="spa"?"Treatment":B.act==="krug"?"Where":"Option")+'</span><div class="chips" style="padding:9px 0 0;flex-wrap:wrap">'+a.vars.map(function(v,i){return '<button class="chip" data-bk-var="'+i+'" aria-pressed="'+(i===B.vari)+'">'+v[0]+'</button>'}).join("")+'</div></div>';
+h+='<div><span class="a-label">Pick a time</span><div class="slotgrid" style="margin-top:9px">'+hs.map(function(t){var s=spots(B.act,B.day,t);return '<button class="slotbtn" data-bk-hour="'+t+'" aria-pressed="'+(t===B.hour)+'">'+t+'<small>'+s+" "+(s===1?"spot":"spots")+'</small></button>'}).join("")+'</div></div>';
+var pp=perPerson(a),min=a.minQty||1,priceLine=a.flat?"$"+a.flat+" per booking":(pp?"$"+pp+" per guest":"Included");
+h+='<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="a-h3">'+(a.qty||"Guests")+'</div><span class="a-meta">'+priceLine+(min>1?" · min. "+min:"")+'</span></div><div class="stepper"><button data-step="-1" aria-label="Fewer">−</button><b>'+B.guests+'</b><button data-step="1" aria-label="More">+</button></div></div>';
+if(a.addons.length)h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Add extras</span>'+a.addons.map(function(x,i){return '<div class="list-item"><span>'+x[0]+'<span class="a-meta" style="display:block">'+(x[1]?money(x[1])+" per guest":"Included")+'</span></span><button class="switch" data-bk-addon="'+i+'" aria-pressed="'+(!!B.addons[i])+'" aria-label="'+x[0]+'"></button></div>'}).join("")+'</div>';
+var tot=total();
+h+='<div class="card stack" style="gap:8px"><div style="display:flex"><span class="a-meta">'+esc(whatName(a))+(a.flat?"":" × "+B.guests)+'</span><b style="margin-left:auto;font-size:13.5px">'+(baseTotal()?money(baseTotal()):"Included")+'</b></div>'+
+Object.keys(B.addons).filter(function(i){return B.addons[i]&&a.addons[i][1]}).map(function(i){return '<div style="display:flex"><span class="a-meta">'+a.addons[i][0]+' × '+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(a.addons[i][1]*B.guests)+'</b></div>'}).join("")+
+'<div style="display:flex;border-top:1px solid var(--app-line);padding-top:9px"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:23px;font-weight:500">'+(tot?money(tot):"Included")+'</b></div>'+(tot?'<span class="a-meta">Plus tax</span>':'')+'</div>';
+h+='<button class="btn amber" data-go="checkout">Continue · '+dayLabel()+', '+B.hour+'</button>';
+$("#slots-body").innerHTML=h}
+
+function whatName(a){return a.vars?(B.act==="table"||B.act==="spa"?a.vars[B.vari][0]:a.name+" · "+a.vars[B.vari][0]):a.name}
+function nameFor(x){var a=ACTS[x.act];return a.vars?(x.act==="table"||x.act==="spa"?a.vars[x.v][0]:a.name+" · "+a.vars[x.v][0]):a.name}
+function renderCheckout(){var a=ACTS[B.act],tot=total();
+var opts=[["room","Charge to Cottage","Settled at check-out","i-key"],["wallet","Apple Pay","Face ID","i-card"],["card","Visa •••• 4242","Saved card","i-card"]];
+$("#checkout-body").innerHTML='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div></div>'+
+(tot>0?'<span class="a-label">Pay with</span><div class="stack" style="gap:9px">'+opts.map(function(o){return '<button class="payopt" data-pay="'+o[0]+'" aria-pressed="'+(B.pay===o[0])+'"><span class="radio">'+svg("check",12)+'</span>'+svg(o[3].slice(2),20)+'<span style="flex:1">'+o[1]+'<span class="a-meta" style="display:block;font-weight:500">'+o[2]+'</span></span></button>'}).join("")+'</div>':'<div class="card" style="background:var(--app-mint);border-color:transparent"><b>Included in your stay</b><span class="a-meta" style="display:block">Nothing to pay.</span></div>')+
+'<div class="card" style="display:flex"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:23px;font-weight:500">'+(tot?money(tot):"Included")+'</b></div>'+(tot?'<p class="a-meta" style="text-align:center">Plus tax.</p>':'')+
+'<p class="a-meta" style="text-align:center">'+(B.act==="spa"?"24 hours' notice to avoid the full charge. Same-day bookings are final.":B.act==="krug"?"48 hours' notice required.":"Changes are easy: message your Experience Curators.")+'</p><button class="btn amber" id="confirm-pay">'+(tot>0?"Confirm &amp; pay "+money(tot):"Confirm booking")+'</button>'}
+
+function confirmBooking(){var tot=total();if(B.pay==="room")charged+=tot;extra=[{d:B.day,h:B.hour,act:B.act,v:B.vari,g:B.guests}].concat(extra);B.paid=true;go("confirmed")}
+function renderConfirmed(){var a=ACTS[B.act];
+$("#confirmed-body").innerHTML='<div class="burst" style="margin-top:6px">'+svg("check",34)+'</div><div><h1 class="a-h1">You\'re booked.</h1><p class="a-meta" style="margin-top:5px">Reservation TF-70215 · also sent to your email</p></div>'+
+'<div class="card stack" style="gap:10px;text-align:left"><span class="a-label">'+esc(whatName(a))+'</span><div style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+dayLabel()+' · '+B.hour+'</div><span class="a-meta">'+qtyStr(a,B.guests)+'</span></div></div>'+
+'<div class="list-item" style="padding:9px 0">'+svg("pin")+'Twin Farms, Barnard, Vermont<span class="v">Property map</span></div><div class="list-item" style="padding:9px 0">'+svg("bell")+'Remind me 1 hour before<button class="switch" data-switch aria-pressed="true" aria-label="Reminder"></button></div></div>'+
+'<button class="btn" data-go="pass">'+svg("qr")+'Show reservation pass</button><button class="btn outline" data-go="stay">See my stay</button>'}
+function qr(){var n=25,s=7,cells="",seed=70215;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff}
+function inF(x,y){return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8)}
+function finder(ox,oy){var o="";for(var i=0;i<7;i++)for(var j=0;j<7;j++){var e=i===0||j===0||i===6||j===6,c=i>=2&&i<=4&&j>=2&&j<=4;if(e||c)o+='<rect x="'+((ox+i)*s)+'" y="'+((oy+j)*s)+'" width="'+s+'" height="'+s+'"/>'}return o}
+for(var x=0;x<n;x++)for(var y=0;y<n;y++){if(inF(x,y))continue;if(r()>.52)cells+='<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+s+'" height="'+s+'"/>'}
+return '<svg viewBox="0 0 '+(n*s)+' '+(n*s)+'" width="200" height="200" fill="#1F2527" shape-rendering="crispEdges" aria-label="Reservation pass QR code">'+cells+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'</svg>'}
+function renderPass(){var a=ACTS[B.act];$("#pass-body").innerHTML='<div class="qrbox">'+qr()+'</div><div><div class="a-h2">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div><p class="a-meta">Show this to your host. They scan it, no paper vouchers.</p><button class="btn outline">'+svg("share",16)+'Send to a guest in my party</button>'}
+
+function renderServices(){var req=[["In-room dining","Breakfast, lunch, dinner, snacks and late night"],["Same-day laundry","Complimentary"],["Fire laid and lit","In your fireplace or wood stove"],["Borrow a bike","Cruiser, hardtail or pedal-assist"],["Airport transfer","Arranged by email with the team"],["Extra Stave puzzle","A treasury of books, music and games"],["Late check-out","Subject to availability"]];
+var h=heroH("t-house","Your cottage","Aviary · 950 sq ft · stone hot tub · fieldstone fireplace","Twin Farms");
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">Experience Curators</div><span class="a-meta">Message here or call 802-234-9999</span></div><button class="btn sm amber" style="width:auto" data-go="chat">Chat</button></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Request</span>'+req.map(function(r){return '<button class="list-item" data-toast="Request sent: '+r[0]+'"><span style="flex:1">'+r[0]+'<span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></span>'+pill("Request","sand")+'</button>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">In your cottage</span><div class="list-item">'+svg("check")+'Featherbeds, Anichini linens, a fireplace</div><div class="list-item">'+svg("check")+'Fully stocked refrigerator, all complimentary</div><div class="list-item">'+svg("check")+'Handmade confections delivered nightly</div><div class="list-item">'+svg("check")+'Twice-daily housekeeping</div><div class="list-item">'+svg("check")+'Out of the Woods bath products, made for Twin Farms</div></div>';
+h+='<div class="stack rowlist" style="gap:9px">'+rowH("t-gift","Offers &amp; gifts","Long Stay package, gift certificates",pill("Offers"),'data-go="offers"')+'</div>';
+$("#services-body").innerHTML=h}
+
+function renderOffers(){
+var h='<div class="quote">Stay a little longer: reserve 7 or more nights and receive one night on us, plus a $400 credit toward the Reserve Wine List.<span class="who">Long Stay Package</span></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Stay · all inclusive</span>'+
+[["The Treehouses","Eight wabi-sabi treehouses, about 800 sq ft, 14 to 20 feet up"],["Cottages","Ten freestanding cottages with fireplaces and screened porches"],["Farmhouse at Copper Hill","Four suites by Peter Bohlin, booked singly or together"],["The Lodge","Two bedrooms, 3,350 sq ft, by phone: (877) 725-4162"],["Main House","Four rooms in the circa 1795 farmhouse"]].map(function(o){return '<div class="menu-item"><div style="flex:1"><div class="a-h3">'+o[0]+'</div><span class="a-meta">'+o[1]+'</span></div></div>'}).join("")+'</div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-gift" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("gift",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Gift certificates</div><span class="a-meta">A gift of Twin Farms</span></div><button class="pill sand" data-toast="Gift certificates opened">Shop</button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-house" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("star",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Book your next stay</div><span class="a-meta">Returning guests: your preferences are saved</span></div><button class="pill sand" data-toast="Rebooking opened">Open</button></div>';
+$("#offers-body").innerHTML=h}
+
+var msgs=[
+{r:"out",t:"What time is dinner, and do I need to book?",ts:"1:02 PM"},
+{r:"in",t:"Dinner is nightly at one of five seatings, 6:00, 6:30, 7:00, 7:30 or 8:00 PM, in the Dining Room or at Twiggs. A reservation is required every evening of your stay. Breakfast and lunch are open seating.",ts:"1:03 PM",who:1,a:[["Reserve dinner","go:dining"]]}];
+var KB=[
+[/check.?out|check.?in|late|early/i,"Check-in is at 4:00 PM and check-out at 11:00 AM. Lunch is open seating from 12:30 PM on arrival and departure days. I can ask for a late check-out, subject to availability.",[["Request late check-out","toast:Request sent: Late check-out"]]],
+[/dog|pet|puppy/i,"We welcome up to two dogs (100 lbs each at most) in the Log Cabin, Meadow and Barn cottages, at $75 per day per dog. We provide a bed, blankets, treats and bowls, but not dog food.",null],
+[/kid|child|children|teen|adult|age/i,"Twin Farms is reserved for adults only, ages 14 and over.",null],
+[/dress|wear|attire|jeans/i,"Smart country-casual, from a tweed blazer or cocktail dress to blue jeans and a flannel shirt at dinner. Lunch can be even more casual.",null],
+[/included|inclusive|extra|cost|charge|fee/i,"Your rate includes all meals, fine wines, beers and spirits, and all activities with equipment and instruction. Extra: the Reserve Wine List, spa treatments, private training, guided activities and special culinary events.",null],
+[/onsen|soak|hot tub/i,"The Onsen is a private 104°F salt-water bath in a Shou Sugi Ban House in the woods, open 24 hours. Reservations are on the hour, 30 minutes per soak.",[["Book the Onsen","act:onsen"]]],
+[/spa|massage|facial|treatment|gym|fitness|yoga|pilates/i,"The Bridge House Spa offers massages and Biologique Recherche facials, and some treatments can come to your cottage. Please give 24 hours' notice. The Fitness Center is open 24/7, and yoga and Pilates are complimentary.",[["Book a treatment","act:spa"],["See spa","go:spa"]]],
+[/picnic|lunch|lift shack|lean/i,"Picnics are included and by reservation. We deliver to settings like the Lift Shack, the Lean-to and Jakes' Fishing Shack, and clear everything away afterwards.",[["Reserve a picnic","act:picnic"]]],
+[/dinner|eat|food|restaurant|breakfast|twiggs|reserv/i,"Dinner is by reservation each night in the Dining Room or Twiggs. Breakfast 7:00 – 10:00 AM and lunch 12:30 – 2:00 PM are open seating.",[["Reserve dinner","go:dining"]]],
+[/wine|cellar|champagne|krug|caviar/i,"The cellar holds about 17,000 bottles. You can add a Private Wine Cellar dinner ($250 per person), the Chef's Kitchen Table ($500 per person) or Krug and caviar ($900) with 48 hours' notice.",[["See dining","go:dining"]]],
+[/airport|drive|direction|uber|lyft|taxi|transfer|car/i,"We are about 90 minutes from Burlington, three hours from Boston and five from New York. Uber and Lyft are not reliable here, and mobile service is limited. For airport transfers, email the team.",null],
+[/event|what.?s on|truffle|author|ken burns|thanksgiving|christmas|new year/i,"Coming up: White Truffle Dinner Weekend on 7 November, Rutledge & Vine on 20 – 22 November, Thanksgiving, Christmas and New Year's Eve, and the Off Script author series.",[["See events","go:events"]]],
+[/human|person|reception|call|phone/i,"Of course. I've flagged this for the team and they will message you in a few minutes. You can also call 802-234-9999.",null]];
+var SUG=["What is included?","Dress code?","Are dogs allowed?","Book the Onsen","Talk to a person"];
+function paintMsgs(typing){var m=$("#msgs");
+m.innerHTML=msgs.map(function(x){return '<div class="bubble '+x.r+'">'+esc(x.t)+(x.a?'<div class="acts">'+x.a.map(function(a){return '<button data-x="'+a[1]+'">'+a[0]+'</button>'}).join("")+'</div>':'')+'<small>'+(x.who?"Experience Curators · ":"")+x.ts+'</small></div>'}).join("")+(typing?'<div class="bubble in typing"><i></i><i></i><i></i></div>':'');
+m.scrollTop=m.scrollHeight}
+function ask(q){var ts=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});msgs.push({r:"out",t:q,ts:ts});paintMsgs(true);
+var hit=null;for(var i=0;i<KB.length;i++){if(KB[i][0].test(q)){hit=KB[i];break}}
+setTimeout(function(){msgs.push({r:"in",t:hit?hit[1]:"Good question. I'll check with the team and reply here shortly. Meanwhile I can reserve dinner, a picnic, the Onsen or the spa.",ts:ts,who:1,a:hit?hit[2]:null});paintMsgs()},750)}
+function renderChat(){paintMsgs();$("#sugg").innerHTML=SUG.map(function(x){return '<button class="chip" data-sug>'+x+'</button>'}).join("")}
+
+function renderStay(){var h='<div class="card hero-pine" style="border:0"><span class="a-label" style="color:rgba(255,255,255,.65)">Reservation TF-70215</span><div style="font-family:var(--display);font-size:27px;font-weight:500;margin-top:3px;line-height:1.1">Twin Farms</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Aviary cottage · Nov 6 – 9 · 2 adults</div></div>';
+h+='<div class="stats"><div class="stat"><span class="a-label">Room charges</span><b>'+money(charged)+'</b></div><div class="stat"><span class="a-label">Bookings</span><b>'+(extra.length+1)+'</b></div></div>';
+if(extra.length)h+='<div class="card timeline" style="padding:14px 14px 0 34px">'+extra.map(function(x){var a=ACTS[x.act];return '<div class="tl now"><span class="t">'+dayLabelFor(x.d)+" · "+x.h+'</span><div class="a-h3">'+esc(nameFor(x))+'</div><span class="a-meta">'+qtyStr(a,x.g)+" · Just booked</span></div>"}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><div class="list-item">'+svg("key")+'Digital cottage key<span class="v">Active</span></div><div class="list-item">'+svg("sun")+'Check-in / check-out<span class="v">4 PM / 11 AM</span></div><div class="list-item">'+svg("fork")+'All meals and drinks<span class="v">Included</span></div><div class="list-item">'+svg("drop")+'The Onsen<span class="v">24 hours</span></div><div class="list-item">'+svg("bell")+'Activity reminders<button class="switch" data-switch aria-pressed="true" aria-label="Reminders"></button></div><button class="list-item" data-toast="Express check-out set up">'+svg("pin")+'Express check-out<span class="v">Set up</span></button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">Prefer to talk?</div><span class="a-meta">Experience Curators · 802-234-9999</span></div></div>';
+$("#stay-body").innerHTML=h}
+
+var views={},railItems={};
+document.querySelectorAll("[data-view]").forEach(function(v){views[v.dataset.view]=v});
+document.querySelectorAll(".rail-item").forEach(function(b){railItems[b.dataset.go]=b});
+var current=null;
+var R={home:renderHome,experiences:renderExperiences,dining:renderDining,spa:renderSpa,events:renderEvents,slots:renderSlots,checkout:renderCheckout,confirmed:renderConfirmed,pass:renderPass,chat:renderChat,services:renderServices,offers:renderOffers,stay:renderStay};
+function render(id){if(R[id])R[id]()}
+function go(id){
+if(!views[id])return;
+var changed=id!==current;current=id;render(id);
+if(!changed)return;
+Object.keys(views).forEach(function(k){views[k].classList.toggle("active",k===id)});
+Object.keys(railItems).forEach(function(k){railItems[k].setAttribute("aria-current",k===id?"true":"false")});
+var sc=views[id].querySelector(".app-scroll");if(sc&&id!=="chat")sc.scrollTop=0;
+var tab=(TABS.filter(function(t){return t.match.indexOf(id)>-1})[0]||{}).id;
+document.querySelectorAll("[data-tab]").forEach(function(t){t.setAttribute("aria-current",t.dataset.tab===tab?"true":"false")});
+var n=NOTES[id];
+$("#n-group").textContent=n.group;$("#n-title").textContent=n.title;$("#n-lede").textContent=n.lede;
+$("#n-list").innerHTML=n.list.map(function(x){return "<li>"+x+"</li>"}).join("");$("#n-why").textContent=n.why;
+var i=ORDER.indexOf(id);$("#prev").disabled=(i<=0);$("#next").disabled=(i>=ORDER.length-1);
+if(history.replaceState)history.replaceState(null,"","#"+id)}
+function step(d){var i=ORDER.indexOf(current)+d;if(i>=0&&i<ORDER.length)go(ORDER[i])}
+function toast(t){var e=$("#toast");if(!e){e=document.createElement("div");e.id="toast";e.style.cssText="position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:#2F3538;color:#fff;font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:99px;z-index:20;transition:opacity .2s;max-width:80%;text-align:center";document.querySelector(".screen").appendChild(e)}
+e.innerHTML=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.opacity=0},2200)}
+function action(x){var p=x.split(":"),k=p[0],v=p.slice(1).join(":");if(k==="act"){setAct(v);go("slots")}else if(k==="go")go(v);else if(k==="toast")toast(v)}
+$("#prev").addEventListener("click",function(){step(-1)});$("#next").addEventListener("click",function(){step(1)});
+document.addEventListener("click",function(e){
+var t;
+if(t=e.target.closest("[data-x]")){action(t.dataset.x);return}
+if(t=e.target.closest("[data-res]")){setAct("table",+t.dataset.res);go("slots");return}
+if(t=e.target.closest("[data-book]")){setAct(t.dataset.book);go("slots");return}
+if(t=e.target.closest("[data-go]")){e.preventDefault();go(t.dataset.go);return}
+if(t=e.target.closest("[data-toast]")){toast(t.dataset.toast);return}
+if(t=e.target.closest("[data-bk-day]")){B.day=+t.dataset.bkDay;renderSlots();return}
+if(t=e.target.closest("[data-bk-hour]")){B.hour=t.dataset.bkHour;renderSlots();return}
+if(t=e.target.closest("[data-bk-var]")){B.vari=+t.dataset.bkVar;renderSlots();return}
+if(t=e.target.closest("[data-bk-addon]")){var i=t.dataset.bkAddon;B.addons[i]=!B.addons[i];renderSlots();return}
+if(t=e.target.closest("[data-step]")){var a=ACTS[B.act];B.guests=Math.max(a.minQty||1,Math.min(a.maxQty||8,B.guests+(+t.dataset.step)));renderSlots();return}
+if(t=e.target.closest("[data-pay]")){B.pay=t.dataset.pay;renderCheckout();return}
+if(t=e.target.closest("#confirm-pay")){confirmBooking();return}
+if(t=e.target.closest("[data-sug]")){ask(t.textContent);return}
+var grp=e.target.closest("[data-chip],[data-seg],[data-day]");
+if(grp){var kind=grp.hasAttribute("data-chip")?"data-chip":grp.hasAttribute("data-seg")?"data-seg":"data-day";
+grp.parentElement.querySelectorAll("["+kind+"]").forEach(function(s){s.setAttribute("aria-pressed",s===grp?"true":"false")});return}
+var sw=e.target.closest("[data-switch]");if(sw)sw.setAttribute("aria-pressed",sw.getAttribute("aria-pressed")==="true"?"false":"true")});
+$("#chat-form").addEventListener("submit",function(e){e.preventDefault();var v=$("#chat-inp").value.trim();if(v){$("#chat-inp").value="";ask(v)}});
+var nb=$("#notes-toggle");
+function setNotes(on){document.body.setAttribute("data-notes",on?"on":"off");nb.setAttribute("aria-pressed",on?"true":"false");try{localStorage.setItem("tf-notes",on?"on":"off")}catch(e){}}
+nb.addEventListener("click",function(){setNotes(document.body.getAttribute("data-notes")!=="on")});
+document.addEventListener("keydown",function(e){if(e.target.matches("input,textarea"))return;
+if(e.key==="ArrowRight")step(1);if(e.key==="ArrowLeft")step(-1);if(e.key==="n"||e.key==="N")nb.click()});
+var sn=null;try{sn=localStorage.getItem("tf-notes")}catch(e){}
+setNotes(sn==="on");
+var start=(location.hash||"").replace("#","");
+go(views[start]?start:"welcome");
+})();
+</script></body></html>
